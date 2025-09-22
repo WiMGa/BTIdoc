@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl:*)",
+      "Read(//c/Users/Gajda/source/repos/BTIman/**)",
+      "Read(//c/Users/Gajda/source/repos/BTI_API/**)",
+      "Bash(dotnet run:*)",
+      "Read(//c/Users/Gajda/OneDrive/Desktop/**)",
+      "Bash(dotnet build:*)",
+      "Bash(\"C:\\Users\\Gajda\\OneDrive\\Desktop\\Start BTI_API.bat\")",
+      "Bash(taskkill:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
