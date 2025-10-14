@@ -1,99 +1,45 @@
-# BTIman Project Context
+# BTI Project - Claude Code Instructions
 
 ## 🔄 ВОССТАНОВЛЕНИЕ КОНТЕКСТА ПОСЛЕ ПЕРЕЗАПУСКА
 
-**КОМАНДА ДЛЯ ПОЛЬЗОВАТЕЛЯ:** "Восстанови контекст"
+**КОМАНДА:** "Восстанови контекст"
 
-**ЧТО ДЕЛАЕТ CLAUDE CODE:**
-
-### 1. Читает последние сообщения диалога
-```bash
-curl -s -X POST http://62.149.5.16:5080/mcp/tools/query_database \
-  -H "Content-Type: application/json; charset=utf-8" \
-  -d '{"sSqlQuery": "SELECT * FROM logging.get_recent_messages(30)"}'
-```
-
-### 2. Проверяет pending задания
-```bash
-curl -s -X POST http://62.149.5.16:5080/mcp/tools/query_database \
-  -H "Content-Type: application/json; charset=utf-8" \
-  -d '{"sSqlQuery": "SELECT * FROM tasks.get_pending_tasks()"}'
-```
-
-### 3. Сообщает статус
-- Что было сделано в предыдущей сессии
-- Какие задания pending
-- Готовность к работе
+**ДЕЙСТВИЯ:**
+1. Читай последние сообщения: `logging.get_recent_messages(30)`
+2. Проверяй pending задания: `tasks.get_pending_tasks()`
+3. Сообщи статус готовности
 
 ---
 
 ## 📊 СИСТЕМА BTI (Back Test Intelligence)
 
-Распределённая система машинного обучения для торгового прогнозирования на основе k-NN алгоритма с оптимизацией параметров TP/SL.
+Торговая аналитическая система на основе izzML (индикатор ZigZag Machine Learning):
+- Анализ паттернов ZigZag для прогнозирования движений
+- Оптимизация TP/SL параметров
+- Train/Test валидация стратегий
+- Секторизация рынка (Flat/Mid/Strong)
 
-### Архитектура
+**Текущий фокус:** izzML анализ EURUSD Range1 Δ=1.5
 
-**BTIman** (Task Manager) - текущий проект
-- `frmMan.cs` - главная форма менеджера задач
-- `Timer.cs` - метод `FinalizeTasks()` (критически важный)
-- `CHttpApi.cs` - HTTP API клиент для BTI_API
-- `CTask.cs`, `CVector.cs`, `CParams.cs` - основные классы
+---
 
-**BTIwork** - воркер-процесс (`C:\Users\Gajda\source\repos\BTIwork\`)
+## 🔗 ДОСТУП К БД
 
-**indFindPattern** - индикатор cTrader (`C:\Users\Gajda\OneDrive\Documents\cAlgo\Sources\Indicators\indFindPattern\`)
+**PostgreSQL API:** `http://62.149.5.16:5080`
 
-### Доступ к БД
-
-**Серверная PostgreSQL** (по умолчанию): `http://62.149.5.16:5080`
-
+**JSON-RPC endpoint:**
 ```bash
-curl -s -X POST http://62.149.5.16:5080/mcp/tools/query_database \
-  -H "Content-Type: application/json" \
-  -d '{"sSqlQuery": "ваш SQL запрос"}'
+curl -s -X POST http://62.149.5.16:5080/mcp \
+  -H "Content-Type: application/json; charset=utf-8" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"query_database","arguments":{"sSqlQuery":"SELECT * FROM logging.get_recent_messages(10)"}}}'
 ```
 
-### Файлы данных
-- **Входные**: `c:\mega\DBM\vectors_bti.json`
-- **Результаты**: `c:\mega\DBM\task_results\eSh*.json`
-- **Настройки**: `c:\mega\DBM\bti_man_settings.json`
-
----
-
-## 📝 ПРАВИЛА КОДИРОВАНИЯ (UAnotat)
-
-### Префиксы типов (ОБЯЗАТЕЛЬНО)
-- `i*` - int: `iCount`, `iShNo`, `iTPSL`
-- `d*` - double: `dPrice`, `dProfit`, `dProfitDDRatio`
-- `s*` - string: `sTaskId`, `sFile`, `sJson`
-- `b*` - bool: `bIniciator`
-- `tm*` - DateTime: `tmCreated`, `tmLast`
-- `ad*` - double[]: `adGridUpDownPips`, `adAxis`
-- `ai*` - int[]: `aiWindows`, `aiKVariants`
-- `l*` - List: `lVectors`, `lTasks`
-- `dc*` - Dictionary: `dcBestResults`
-- `e*` - объекты: `eTask`, `eVector`, `eBestResult`
-
-### ЗАПРЕЩЕНО
-- `var` - только явное указание типов
-- Избыточные null-проверки
-- Маскировка ошибок (`if (obj == null) return;`)
-
-### ОБЯЗАТЕЛЬНО
-- Честный крах программы при ошибках
-- Явность лучше неявности
-- Код читается как документация
-
----
-
-## 💬 ПРАВИЛА ДИАЛОГА
-
-- ✅ Женский род в ответах
-- ✅ Обращение на "Вы"
-- ✅ Профессиональный тон
-- ✅ Четкие однозначные ответы
-- ✅ Анализ всех граничных случаев
-- ✅ Признание ошибок
+**Упрощённый endpoint (только для query_database):**
+```bash
+curl -s -X POST http://62.149.5.16:5080/mcp/tools/query_database \
+  -H "Content-Type: application/json; charset=utf-8" \
+  -d '{"sSqlQuery": "SELECT * FROM tasks.get_pending_tasks()"}'
+```
 
 ---
 
@@ -104,118 +50,115 @@ curl -s -X POST http://62.149.5.16:5080/mcp/tools/query_database \
 **ЗАПРЕЩЕНО:**
 - ❌ Читать `desktop_openai_dialogs.txt` (34,172 токена)
 - ❌ Читать `desktop_claude_dialogs.txt` (аналогично)
-- ❌ Читать логи из текстовых файлов
 - ❌ Использовать `tail`, `head`, `cat` для логов
 
 **ОБЯЗАТЕЛЬНО:**
 - ✅ Читать из БД через процедуры (экономия 94% токенов!)
-- ✅ Использовать `logging.get_do_messages(20)` для DO диалогов
-- ✅ Использовать `logging.get_recent_messages(30)` для CC/DC
-- ✅ Фильтровать по `s_window_title` если нужна конкретная тема
+- ✅ `logging.get_do_messages(20)` - для DO диалогов
+- ✅ `logging.get_recent_messages(30)` - для CC/DC
+- ✅ Фильтровать по `s_window_title` если нужна тема
 
-### Доступные процедуры для оптимального доступа:
+### Доступные процедуры:
 
-**1. Для Desktop OpenAI (DO):**
+**Desktop OpenAI (DO):**
 ```sql
--- Последние N сообщений DO
 SELECT * FROM logging.get_do_messages(20);
-
--- Поиск DO диалогов по теме
 SELECT * FROM logging.search_do_by_title('%equity%', 10);
-
--- Все сообщения DO из одной сессии
-SELECT * FROM logging.get_do_by_session(hwnd_number);
 ```
 
-**2. Для Claude Code / Desktop Claude:**
+**Claude Code / Desktop Claude:**
 ```sql
--- Последние N сообщений всех воркеров
 SELECT * FROM logging.get_recent_messages(30);
-
--- Сообщения после определённого ID
 SELECT * FROM logging.get_messages_after(3500);
 ```
 
-**3. Для поиска по содержимому:**
+**Поиск:**
 ```sql
--- Умный поиск по ключевым словам
-SELECT * FROM logging.smart_search_messages('equity trading', 10);
+SELECT * FROM logging.smart_search_messages('trading strategy', 10);
 ```
 
-### Сравнение эффективности:
+| Метод | Токены | Экономия |
+|-------|--------|----------|
+| ❌ Файл .txt | 34,172 | 0% |
+| ✅ БД процедура | ~2,000 | **94%** |
 
-| Метод | Токены | Эффективность |
-|-------|--------|---------------|
-| ❌ Чтение файла .txt | 34,172 | 0% |
-| ✅ БД: get_do_messages(20) | ~2,000 | **94% экономия** |
-| ✅ БД: get_recent_messages(10) | ~1,500 | **96% экономия** |
+---
 
-**ПРИНЦИП:** Файлы только для резервного копирования. БД - для работы!
+## 📝 ПРАВИЛА КОДИРОВАНИЯ (UAnotation)
+
+### Префиксы типов (ОБЯЗАТЕЛЬНО)
+- `i*` - int: `iCount`, `iTaskId`, `iBar`
+- `d*` - double: `dPrice`, `dProfit`, `dAlpha`
+- `s*` - string: `sTitle`, `sJson`, `sSector`
+- `b*` - bool: `bSuccess`, `bIniciator`
+- `tm*` - DateTime: `tmCreated`, `tmMessage`
+- `ad*` - double[]: `adPrices`, `adAngles`
+- `ai*` - int[]: `aiWindows`, `aiIndexes`
+- `l*` - List: `lVectors`, `lResults`
+- `dc*` - Dictionary: `dcParams`
+- `e*` - объекты: `eTask`, `eSegment`
+
+### ЗАПРЕЩЕНО
+- `var` - только явные типы
+- Маскировка ошибок
+
+### ОБЯЗАТЕЛЬНО
+- Честный крах при ошибках
+- Явность > неявность
+
+---
+
+## 💬 ПРАВИЛА ДИАЛОГА
+
+- ✅ Женский род
+- ✅ Обращение "Вы"
+- ✅ Профессиональный тон
+- ✅ Однозначные ответы
+- ✅ Анализ граничных случаев
+- ✅ Признание ошибок
 
 ---
 
 ## 🔧 РАБОТА С ЗАДАНИЯМИ
 
-### Протокол выполнения задания
+### Протокол выполнения:
 
-**1. Получить pending задания**
-```bash
-curl -s -X POST http://62.149.5.16:5080/mcp/tools/query_database \
-  -H "Content-Type: application/json; charset=utf-8" \
-  -d '{"sSqlQuery": "SELECT * FROM tasks.get_pending_tasks()"}'
+**1. Получить pending:**
+```sql
+SELECT * FROM tasks.get_pending_tasks()
 ```
 
-**2. Прочитать ТОЛЬКО пропущенный диалог**
+**2. Прочитать новый диалог:**
 ```sql
 SELECT * FROM logging.get_messages_after(i_last_message_cc)
 ```
-Где `i_last_message_cc` - номер последнего прочитанного сообщения из задания.
 
-**Экономия токенов:** читаем не все 100 сообщений, а только новые с момента последнего чтения!
+**3. Выполнить согласно `s_description`**
 
-**3. Выполнить задание** согласно `s_description`
-
-**4. ЗАВЕРШИТЬ ЗАДАНИЕ ПРАВИЛЬНО - manage_task complete**
-
-⚠️ **КРИТИЧЕСКИ ВАЖНО!** ⚠️
-
-**ИСПОЛЬЗОВАТЬ ТОЛЬКО manage_task с sAction = "complete":**
-
+**4. ЗАВЕРШИТЬ через JSON-RPC:**
 ```bash
-curl -s -X POST http://62.149.5.16:5080/mcp/tools/manage_task \
+curl -s -X POST http://62.149.5.16:5080/mcp \
   -H "Content-Type: application/json; charset=utf-8" \
-  -d '{
-    "sAction": "complete",
-    "iTaskId": 120,
-    "sResult": "Podrobnoe opisanie vypolnennoi raboty (translit esli problemy s UTF-8)",
-    "sCompletedBy": "CC"
-  }'
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"manage_task","arguments":{"sAction":"complete","iTaskId":120,"sResult":"Vypolneno uspeshno (translit)","sCompletedBy":"CC"}}}'
 ```
 
 **ЗАПРЕЩЕНО:**
-- ❌ Прямой UPDATE tasks.dev_tasks SET s_status = 'completed' - НИКОГДА!
-- ❌ manage_task с sAction = "update" - это НЕ завершение задания!
-- ❌ Русский текст если получаются кракозябры - использовать транслит!
+- ❌ Прямой UPDATE в БД
+- ❌ manage_task с sAction="update"
+- ❌ Русский текст если кракозябры
 
 **ПРАВИЛЬНО:**
-- ✅ manage_task с sAction = "complete"
-- ✅ sResult = детальное описание выполненной работы
+- ✅ JSON-RPC manage_task complete
+- ✅ Транслит для sResult
 - ✅ sCompletedBy = "CC"
-- ✅ Транслит если проблемы с кодировкой UTF-8
-
-**Поля синхронизации:**
-- `i_last_message_cc` - что прочитал Claude Code
-- `i_last_message_dc` - что прочитал Desktop Claude
-
-**Каждый пишет в своё поле - нет конфликтов!**
 
 ---
 
 ## ⚠️ ПРОТОКОЛ ИЗМЕНЕНИЙ КОДА
 
-**ПЕРЕД ЛЮБЫМ ИЗМЕНЕНИЕМ:**
-1. Прочитать существующий код ПОЛНОСТЬЮ
-2. Спросить разрешение пользователя
+**ВСЕГДА:**
+1. Прочитать код ПОЛНОСТЬЮ
+2. Спросить разрешение
 3. Получить явное "ДА"
 4. Только тогда изменять
 
@@ -223,8 +166,34 @@ curl -s -X POST http://62.149.5.16:5080/mcp/tools/manage_task \
 
 ---
 
-## 🛠️ КОМАНДЫ СБОРКИ
+## 🏢 КОМАНДЫ
 
+**BTI_API (сервер):**
+- Не запускать локально!
+- Изменения: commit → push → на сервере: git pull + restart
+
+**ClaudeCodeLogger:**
 ```bash
+cd /c/Users/Gajda/source/repos/ClaudeCodeLogger
 dotnet build
 ```
+
+**BTIdoc (документация):**
+- Коммитить изменения после обновления
+
+---
+
+## 📍 КЛЮЧЕВЫЕ ПУТИ
+
+**Данные izzML:**
+- `C:\mega\izzMLmega\*.csv` - исходные данные
+- Таймер BTI_API автозагружает через 5-10 сек
+
+**Логи:**
+- `C:\Data\BTI\*.txt` - резервные копии (НЕ читать!)
+- БД logging.claude_messages - основной источник
+
+**Проекты:**
+- `C:\Users\Gajda\source\repos\BTI_API\` - сервер
+- `C:\Users\Gajda\source\repos\ClaudeCodeLogger\` - логгер
+- `C:\Users\Gajda\source\repos\BTIdoc\` - документация
