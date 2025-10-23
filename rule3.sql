@@ -1,0 +1,2 @@
+INSERT INTO "BTI_Master_Tree" ("sSection", "sTaskType", "sTitle", "sContent", "sKeywords", "sPriority")
+VALUES ('RULES', 'CRITICAL', 'РЕШАТЬ ОШИБКИ СРАЗУ', 'Каждую ошибку анализировать немедленно', 'ошибки', 'HIGH');

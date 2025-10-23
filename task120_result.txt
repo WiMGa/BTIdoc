@@ -1,0 +1,11 @@
+Выполнено:
+1) wEnd.cs изменён - путь, формат имени, колонки
+2) ScanAndLoadIzzmlCsv добавлена в McpToolsService
+3) MCP tool scan_and_load_izzml_csv зарегистрирован
+4) Скомпилировано успешно
+5) GitHub commit 4d7aae1
+
+DC должен:
+- git pull на сервере
+- restart BTI_API
+- проверить/создать схему izzml и таблицу zz_extremums в PostgreSQL

@@ -1,0 +1,1 @@
+ALTER TABLE "CC_Sessions" ADD COLUMN "sWindowTitle" VARCHAR(255);

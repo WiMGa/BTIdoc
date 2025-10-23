@@ -1,0 +1,2 @@
+INSERT INTO "BTI_Master_Tree" ("sSection", "sTaskType", "sTitle", "sContent", "sKeywords", "sPriority")
+VALUES ('RULES', 'CRITICAL', 'ОТВЕЧАТЬ НА КАЖДЫЙ ВОПРОС', 'Отвечать на КАЖДЫЙ вопрос с ПЕРВОГО раза', 'вопросы', 'HIGH');

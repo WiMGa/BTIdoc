@@ -1,0 +1,1 @@
+SELECT COUNT(*) as cc_messages_count FROM "CC_Messages";

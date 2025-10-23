@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -X POST http://62.149.5.16:5080/mcp/tools/query_database -H \"Content-Type: application/json; charset=utf-8\" -d \"{\"\"sSqlQuery\"\": \"\"SELECT s_window_title, s_user_content, s_assistant_content FROM logging.get_recent_messages(50) WHERE s_window_title LIKE ''%BTI%'' OR s_user_content LIKE ''%BTIman%'' OR s_user_content LIKE ''%BTIwork%'' ORDER BY tm_message DESC LIMIT 10\"\"}\")",
+      "Bash(curl -s -X POST http://62.149.5.16:5080/mcp/tools/query_database -H \"Content-Type: application/json; charset=utf-8\" -d \"{\"\"sSqlQuery\"\": \"\"SELECT table_name FROM information_schema.tables WHERE table_schema = ''izzml'' ORDER BY table_name\"\"}\")",
+      "Bash(curl -s -X POST http://62.149.5.16:5080/mcp/tools/query_database -H \"Content-Type: application/json; charset=utf-8\" -d \"{\"\"sSqlQuery\"\": \"\"SELECT COUNT(*) as cnt, MAX(timestamp) as last_update FROM izzml.zz_extremums\"\"}\")",
+      "Bash(curl -s -X POST http://62.149.5.16:5080/mcp/tools/query_database -H \"Content-Type: application/json; charset=utf-8\" -d \"{\"\"sSqlQuery\"\": \"\"SELECT COUNT(*) as cnt, MAX(timestamp) as last_update FROM izzml.bars WHERE true\"\"}\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
