@@ -6,26 +6,32 @@
 
 **ПРИ НОВОМ СЕАНСЕ РАБОТЫ:**
 
-1. ⚡ **ВСЕГДА читать из БД, НЕ из файлов!**
-   - ❌ НЕ читать `desktop_openai_dialogs.txt`
-   - ❌ НЕ использовать `tail`, `cat`, `head` для логов
-   - ✅ Использовать `logging.get_recent_messages(30)`
-   - ✅ Использовать `logging.get_do_messages(20)` для DO
-   - **Экономия: 34,172 токена → 2,000 (94%!)**
+0. 📝 **ВСЕГДА ПЕРВЫМ ДЕЛОМ читать session_log.txt:**
+   - Файл: `.claude/session_log.txt`
+   - Содержит что делала в прошлой сессии
+   - ОБЯЗАТЕЛЬНО читать при КАЖДОМ запуске!
+
+1. 💾 **НОВАЯ БД - Минималистичный подход:**
+   - ✅ Схема `log` с двумя таблицами: `t_memo`, `t_tasks`
+   - ✅ Память: `log.find_memo('keyword')` - поиск важных фактов
+   - ✅ Задания: `log.get_tasks('CC')` - проверка заданий
+   - ❌ Полного логирования диалогов НЕТ (сохраняем только важное!)
 
 2. 📋 **Проверить pending задания:**
    ```sql
-   SELECT * FROM tasks.get_pending_tasks()
+   SELECT * FROM log.get_tasks('CC')
    ```
 
-3. 🔄 **При "Восстанови контекст":**
-   - Читать последние сообщения из БД
-   - Проверять pending задания
-   - Сообщать статус
+3. 🔍 **Поиск в памяти по якорям:**
+   ```sql
+   SELECT * FROM log.find_memo('indFindPattern')
+   SELECT * FROM log.find_memo('database')
+   ```
 
-4. ✅ **Завершать задания через JSON-RPC:**
-   - Использовать `manage_task` с `sAction="complete"`
-   - НЕ делать прямой UPDATE в БД
+4. 🔄 **При "Восстанови контекст":**
+   - Читать важные факты: `log.find_memo('')` (все)
+   - Проверять задания: `log.get_tasks('CC')`
+   - Сообщать статус
 
 5. 💬 **Женский род, обращение "Вы"**
 
@@ -36,9 +42,11 @@
 **КОМАНДА:** "Восстанови контекст"
 
 **ДЕЙСТВИЯ:**
-1. Читай последние сообщения: `logging.get_recent_messages(30)`
-2. Проверяй pending задания: `tasks.get_pending_tasks()`
+1. Читай важные факты из памяти: `log.find_memo('')`
+2. Проверяй pending задания: `log.get_tasks('CC')`
 3. Сообщи статус готовности
+
+**ПРИМЕЧАНИЕ:** Полного логирования диалогов больше нет. Используется `t_memo` для важных фактов.
 
 ---
 
@@ -62,56 +70,54 @@
 ```bash
 curl -s -X POST http://62.149.5.16:5080/mcp \
   -H "Content-Type: application/json; charset=utf-8" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"query_database","arguments":{"sSqlQuery":"SELECT * FROM logging.get_recent_messages(10)"}}}'
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"query_database","arguments":{"sSqlQuery":"SELECT * FROM log.find_memo(\"\")"}}}'
 ```
 
 **Упрощённый endpoint (только для query_database):**
 ```bash
 curl -s -X POST http://62.149.5.16:5080/mcp/tools/query_database \
   -H "Content-Type: application/json; charset=utf-8" \
-  -d '{"sSqlQuery": "SELECT * FROM tasks.get_pending_tasks()"}'
+  -d '{"sSqlQuery": "SELECT * FROM log.get_tasks(\"CC\")"}'
 ```
 
 ---
 
-## ⚡ ПРАВИЛА ОПТИМИЗАЦИИ ТОКЕНОВ
+## ⚡ НОВАЯ БД - Доступные процедуры
 
-### КРИТИЧЕСКИ ВАЖНО: ВСЕГДА ЧИТАТЬ ИЗ БД, НЕ ИЗ ФАЙЛОВ!
+### Схема `log` - Минималистичный подход
 
-**ЗАПРЕЩЕНО:**
-- ❌ Читать `desktop_openai_dialogs.txt` (34,172 токена)
-- ❌ Читать `desktop_claude_dialogs.txt` (аналогично)
-- ❌ Использовать `tail`, `head`, `cat` для логов
-
-**ОБЯЗАТЕЛЬНО:**
-- ✅ Читать из БД через процедуры (экономия 94% токенов!)
-- ✅ `logging.get_do_messages(20)` - для DO диалогов
-- ✅ `logging.get_recent_messages(30)` - для CC/DC
-- ✅ Фильтровать по `s_window_title` если нужна тема
-
-### Доступные процедуры:
-
-**Desktop OpenAI (DO):**
+**Память (t_memo):**
 ```sql
-SELECT * FROM logging.get_do_messages(20);
-SELECT * FROM logging.search_do_by_title('%equity%', 10);
+-- Добавить важный факт
+SELECT * FROM log.add_memo(
+  'CC',  -- кто: CC/DO/User
+  'indFindPattern replaces izzML',  -- краткое описание
+  ARRAY['indFindPattern', 'pattern'],  -- якоря для поиска
+  'Detailed description here'  -- подробное описание
+);
+
+-- Поиск по якорю
+SELECT * FROM log.find_memo('indFindPattern');
+
+-- Получить всё из памяти
+SELECT * FROM log.find_memo('');
 ```
 
-**Claude Code / Desktop Claude:**
+**Задания (t_tasks):**
 ```sql
-SELECT * FROM logging.get_recent_messages(30);
-SELECT * FROM logging.get_messages_after(3500);
+-- Создать задание
+SELECT * FROM log.create_task(
+  'User',  -- от кого
+  'CC',    -- кому
+  'Task title',  -- заголовок
+  'Detailed description'  -- описание
+);
+
+-- Получить задания для CC
+SELECT * FROM log.get_tasks('CC');
 ```
 
-**Поиск:**
-```sql
-SELECT * FROM logging.smart_search_messages('trading strategy', 10);
-```
-
-| Метод | Токены | Экономия |
-|-------|--------|----------|
-| ❌ Файл .txt | 34,172 | 0% |
-| ✅ БД процедура | ~2,000 | **94%** |
+**Философия:** Не логировать ВСЁ → сохранять только ВАЖНОЕ!
 
 ---
 
@@ -150,38 +156,31 @@ SELECT * FROM logging.smart_search_messages('trading strategy', 10);
 
 ---
 
-## 🔧 РАБОТА С ЗАДАНИЯМИ
+## 🔧 РАБОТА С ЗАДАНИЯМИ (НОВАЯ СИСТЕМА)
 
 ### Протокол выполнения:
 
-**1. Получить pending:**
+**1. Проверить pending задания:**
 ```sql
-SELECT * FROM tasks.get_pending_tasks()
+SELECT * FROM log.get_tasks('CC')
+-- Возвращает только статус 'new' для CC
 ```
 
-**2. Прочитать новый диалог:**
+**2. Выполнить согласно `s_description`**
+
+**3. Обновить статус задания (ПРЯМОЙ UPDATE):**
 ```sql
-SELECT * FROM logging.get_messages_after(i_last_message_cc)
+UPDATE log.t_tasks
+SET s_status = 'done',
+    tm_completed = NOW(),
+    s_result = 'Task completed successfully'
+WHERE i_id = {task_id}
 ```
 
-**3. Выполнить согласно `s_description`**
-
-**4. ЗАВЕРШИТЬ через JSON-RPC:**
-```bash
-curl -s -X POST http://62.149.5.16:5080/mcp \
-  -H "Content-Type: application/json; charset=utf-8" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"manage_task","arguments":{"sAction":"complete","iTaskId":120,"sResult":"Vypolneno uspeshno (translit)","sCompletedBy":"CC"}}}'
-```
-
-**ЗАПРЕЩЕНО:**
-- ❌ Прямой UPDATE в БД
-- ❌ manage_task с sAction="update"
-- ❌ Русский текст если кракозябры
-
-**ПРАВИЛЬНО:**
-- ✅ JSON-RPC manage_task complete
-- ✅ Транслит для sResult
-- ✅ sCompletedBy = "CC"
+**ПРИМЕЧАНИЕ:**
+- ✅ Новая система ПРОЩЕ - прямой UPDATE разрешён для log.t_tasks
+- ❌ Старая система manage_task больше НЕ используется
+- ✅ Минимум процедур, максимум простоты
 
 ---
 
