@@ -1,3 +1,26 @@
+## Лог сеанса 2025-10-25 (продолжение #4)
+
+### Создано задание для DC на применение SQL скрипта
+
+**После рестарта BTI_API:**
+1. ✅ Проверила что новые процедуры в whitelist
+2. ✅ Создала Task #5 для DC:
+   - Заголовок: "Vypolnit SQL skript add_response_field_to_tasks.sql"
+   - Файл: `C:/Users/Gajda/source/repos/BTIdoc/add_response_field_to_tasks.sql`
+   - Команда: `psql -U postgres -d bti -f ...`
+
+**Что сделает DC:**
+- Добавит поле `s_response TEXT` в таблицу `log.t_tasks`
+- Обновит `log.complete_task(p_task_id, p_result, p_response)` - 3 параметра
+- Создаст `log.get_all_tasks(p_for)` - получить все задания с результатами
+- Создаст `log.get_task_details(p_task_id)` - детали конкретного задания
+
+**После выполнения DC:**
+- CCL сможет завершить Task #3 через обновлённую `log.complete_task()` с подробным ответом
+- Будет разделение: краткий результат (s_result) + подробный ответ (s_response)
+
+---
+
 ## Лог сеанса 2025-10-25 (продолжение #3)
 
 ### Добавлено поле s_response в таблицу log.t_tasks
