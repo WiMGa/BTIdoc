@@ -98,7 +98,7 @@ COMMENT ON FUNCTION log.add_event(TEXT, TEXT, TEXT, TEXT[], TEXT) IS
 -- 3. Процедура: получить последние N событий (ОТ ВСЕХ!)
 -- =====================================================
 
-CREATE OR REPLACE FUNCTION log.get_recent_events(p_limit INTEGER DEFAULT 30)
+CREATE OR REPLACE FUNCTION log.get_recent_events(p_limit INTEGER DEFAULT 15)
 RETURNS TABLE(
     i_id INTEGER,
     tm_created TIMESTAMP,
@@ -127,7 +127,7 @@ END;
 $function$;
 
 COMMENT ON FUNCTION log.get_recent_events(INTEGER) IS
-'Получить последние N событий от ВСЕХ авторов для восстановления контекста. По умолчанию 30.';
+'Получить последние N событий от ВСЕХ авторов для восстановления контекста. По умолчанию 15 (оптимально для DC с лимитами).';
 
 -- =====================================================
 -- 4. Процедура: поиск событий по якорям
@@ -228,11 +228,15 @@ test             - Тестирование
 /*
 -- ===== ВОССТАНОВЛЕНИЕ КОНТЕКСТА =====
 
--- Получить последние 30 событий от ВСЕХ:
-SELECT * FROM log.get_recent_events(30);
+-- Получить последние события от ВСЕХ (по умолчанию 15):
+SELECT * FROM log.get_recent_events();
+
+-- Или явно указать количество:
+SELECT * FROM log.get_recent_events(20);  -- CCL может запросить больше
 
 -- Результат: хронология работы CCL+DC+User за последнее время
 -- Экономия ~90% токенов по сравнению с чтением всего session_log.txt
+-- Default 15 оптимален для DC (избегаем превышения лимитов)
 
 
 -- ===== НАЧАЛО/КОНЕЦ СЕССИИ =====
