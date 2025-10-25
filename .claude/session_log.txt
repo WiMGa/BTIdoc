@@ -1,3 +1,62 @@
+## Лог сеанса 2025-10-25 (продолжение #7 - ФИНАЛ)
+
+### ✅ Финализирована таблица log.t_log с согласованностью и минимализмом
+
+**ИЗМЕНЕНИЯ после обзора:**
+- ❌ `t_session_log` → ✅ `t_log` (короткое имя)
+- ❌ `as_tags[]` → ✅ `as_anchors[]` (единообразие с t_memo!)
+- ❌ 6 процедур → ✅ 4 процедуры (минимализм)
+
+**СОГЛАСОВАННОСТЬ схемы log:**
+
+| Таблица | Назначение | Ключевые поля |
+|---------|-----------|---------------|
+| **t_memo** | Знания (факты) | i_id, tm_created, s_who, s_what, **as_anchors[]**, s_description |
+| **t_tasks** | Задания | i_id, tm_created, s_from, s_to, s_title, s_description, s_status, s_result, s_response |
+| **t_log** | События | i_id, tm_created, s_who, s_event_type, s_title, **as_anchors[]**, s_details |
+
+**Единообразие:**
+- Все таблицы: `i_id` (SERIAL), `tm_created` (TIMESTAMP)
+- Якоря: `as_anchors[]` в t_memo и t_log
+- Описания: `s_description` (t_memo, t_tasks), `s_details` (t_log), `s_response` (t_tasks)
+
+**4 процедуры (минимализм):**
+1. `log.add_event()` - добавить событие
+2. `log.get_recent_events(N)` - последние N от ВСЕХ (восстановление контекста)
+3. `log.search_events(anchors[])` - поиск по якорям
+4. `log.get_events_by_date(from, to)` - события за период
+
+**Убраны избыточные:**
+- ❌ `get_current_session_events()` - не нужно
+- ❌ `get_event_stats()` - преждевременно
+- ❌ `get_last_session()`, `get_session_by_who()` - избыточно
+
+**Сценарии использования:**
+```sql
+-- Восстановить контекст:
+SELECT * FROM log.get_recent_events(30);
+
+-- Где обсуждалось s_response:
+SELECT * FROM log.search_events(ARRAY['s_response', 'database']);
+
+-- Что было сегодня:
+SELECT * FROM log.get_events_by_date(CURRENT_DATE);
+```
+
+**Выполнено:**
+- ✅ SQL скрипт: `create_log_table.sql` (342 строки, +16 строк согласованности)
+- ✅ Whitelist BTI_API: 4 процедуры (commit 172861a)
+- ✅ Task #6 закрыт (скрипт устарел)
+- ✅ Task #7 создан (новый минималистичный скрипт)
+- ✅ t_memo ID=20: финальная структура с согласованностью
+- ✅ BTIdoc commit: 34fbc92
+
+**Экономия токенов:** ~90% (30 событий из БД вместо чтения всего session_log.txt)
+
+**Ожидаем:** Выполнение Task #7 от DC, после чего начнём использовать новую систему
+
+---
+
 ## Лог сеанса 2025-10-25 (продолжение #6)
 
 ### Создана таблица log.t_session_log для логирования событий
