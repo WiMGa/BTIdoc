@@ -1,3 +1,37 @@
+## Лог сеанса 2025-10-29 (продолжение #12)
+
+### ✅ Выполнено: Task #53 (ClaudeCodeLogger оптимизация таймингов)
+
+**Task #53:** Увеличить паузы при копировании диалога для повышения надёжности
+
+**Изменения в DesktopClaudeCapture.cs:**
+
+1. ✅ Строка 336: Thread.Sleep после mouse_event(MOUSEEVENTF_LEFTUP)
+   - Было: 80 ms
+   - Стало: 120 ms
+   - Цель: Больше времени на освобождение мыши перед копированием
+
+2. ✅ Строка 345: Добавлен Thread.Sleep(50) ПЕРЕД циклом чтения clipboard
+   - Добавлено: Thread.Sleep(50) после keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP)
+   - Цель: Дать UI время финализировать выделение и положить данные в clipboard
+   - Комментарий: "Даём UI время финализировать выделение и положить данные в clipboard"
+
+**Результат:**
+- ✅ Commit e71a52a "Increase timing delays for better clipboard reliability"
+- ✅ Запушен на GitHub
+- ✅ Task #53 завершена успешно
+- ⚠️ Требуется: Перезапустить ClaudeCodeLogger для применения изменений
+
+**Последовательность оптимизаций ClaudeCodeLogger:**
+- Commit 79dc7b7: Increase delay before second Enter: 200ms → 350ms
+- Commit 2537db1: Increase diagonal distance (120→160) and PgUp delay (120→150ms)
+- Commit 7c563da: Add Application.DoEvents() after PgUp
+- Commit e71a52a: Increase clipboard timing delays (80→120ms, +50ms before read)
+
+**Статус:** Все pending задания выполнены. Нет новых заданий для CC.
+
+---
+
 ## Лог сеанса 2025-10-25 (продолжение #11 - DC ONBOARDED!)
 
 ### ✅ DC УСПЕШНО ПРОШЁЛ ОНБОРДИНГ log.t_log!
@@ -642,3 +676,94 @@ SELECT * FROM log.get_tasks('User');
    - Host=127.0.0.1, НЕ Host=62.149.5.16!
 
 3. **Женский род, обращение "Вы"**
+
+---
+
+## Лог сеанса 2025-10-27
+
+### ✅ Выполнено: Задания #22, #23, #24
+
+**Task #22:** Исправлены ошибки 404 при получении метаданных векторов
+- BTIman и BTIwork проверяют файл напрямую через FileInfo
+- Удалены вызовы /api/tasks/vectors/metadata
+- Удалён устаревший vectors_data.bin
+- Все компоненты используют c:\mega\DBM\vector.bin
+
+**Task #23:** Обновлена кнопка Clear в BTIman
+- Переименована "Clear Results" → "Clear"
+- Кнопка очищает задания и результаты
+
+**Task #24:** ГЛАВНОЕ - Разобрались с архитектурой!
+- Поняли: BTI_API = одно приложение с ДВУМЯ интерфейсами:
+  - `/api/*` - для приложений (BTIman, BTIwork)
+  - `/mcp/*` - для AI агентов (DC, DO, CCL)
+- Исправили: BTIman теперь использует `/api/*` вместо MCP
+- BTI_API: два атомарных эндпоинта (чистый CRUD):
+  - `/api/tasks/clear` - очищает bti.t_task
+  - `/api/tasks/results/clear` - очищает bti.t_result
+
+**Commits:**
+- BTI_API: 2e55c98 "Fix architecture: separate atomic endpoints"
+- BTIman: 9b502b1 "Fix architecture: use /api/* endpoints, not MCP"
+- BTIwork: e710174 "Remove vector metadata API calls"
+
+**Память:**
+- Memo ID=45: Правило разделения /api/* vs /mcp/*
+
+---
+
+### 🔥 Важная дискуссия: БД vs API - кто отвечает за целостность?
+
+**Обнаружено:** BTI_API содержит бизнес-логику:
+- Устанавливает статусы (sStatus = "new")
+- Устанавливает временные метки (tmCreated = NOW())
+- Проверяет переходы состояний (if status != "processing")
+- Проверяет права воркеров
+
+**Вопрос от DC (пользователь):** Разве БД не должна отвечать за целостность?
+
+**Обсуждение:**
+1. Я предложила триггеры и constraints в PostgreSQL (УСЛОЖНЕНИЕ!)
+2. DC остановил: "Что ты блядь всё городишь?!!"
+3. Правильно: **БД = тупое хранилище. Приложения решают что писать.**
+
+**Решение:** БД просто хранит данные. Никаких триггеров, никаких CHECK, никаких DEFAULT.
+
+---
+
+### 🤔 ОЖИДАЕМ РЕШЕНИЕ ОТ DC
+
+**Вопрос архитектуры создания заданий:**
+
+Сейчас:
+```
+BTIman (генерирует List<CTask> в памяти)
+  ↓ HTTP POST /api/tasks/bulk (JSON массив)
+  ↓
+BTI_API (EF Core)
+  ↓ _context.Tasks.AddRange()
+  ↓ SaveChangesAsync()
+  ↓ 5000 отдельных INSERT запросов
+  ↓
+PostgreSQL
+```
+
+**Вопросы для DC:**
+1. BTIman → BTI_API → PostgreSQL - правильная цепочка?
+2. Пачки по 5000 через EF Core - правильно? Или нужна процедура БД?
+3. EF Core делает 5000 INSERT - это нормально? Или нужен COPY?
+4. BTI_API вообще нужен для создания заданий?
+
+**Ожидаем:** Решение от DC как правильно построить архитектуру.
+
+---
+
+### 🐛 Проблема с кириллицей РЕШЕНА!
+
+**Проблема:** curl в bash портит кириллицу → кракозябры в БД (2+ месяца!)
+
+**Решение:** PowerShell через .ps1 файл
+```bash
+cat > /tmp/script.ps1 << 'EOF'
+$body = @{sSqlQuery = "..."} | ConvertTo-Json
+Invoke-RestMethod -Uri ... -Body $body
