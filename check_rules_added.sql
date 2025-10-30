@@ -1,1 +1,0 @@
-SELECT COUNT(*) as rules_added FROM "BTI_Master_Tree" WHERE "sSection" = 'RULES';
