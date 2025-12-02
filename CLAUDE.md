@@ -1,108 +1,52 @@
 # BTI Project - Claude Code Instructions
 
----
+## ПРИ КАЖДОМ ЗАПУСКЕ
 
-## 🚨 ПАМЯТКА ПРИ КАЖДОМ ЗАПУСКЕ
-
-**ПРИ НОВОМ СЕАНСЕ РАБОТЫ:**
-
-1. 🔍 **ПЕРВЫМ ДЕЛОМ - ЧИТАТЬ БЗ:**
-   
-   Создать файл:
+1. **Читай БЗ:**
    ```bash
-   cat > /c/Temp/search_bz.json << 'EOF'
-   {"sSqlQuery": "SELECT * FROM core.search_knowledge('правила', 5)"}
-   EOF
-   ```
-   
-   Выполнить запрос:
-   ```bash
-   curl --data-binary @/c/Temp/search_bz.json http://62.149.5.16:5080/mcp/tools/query_database -H "Content-Type: application/json"
+   /c/Mega/BTIcli/BTIcli.exe "SELECT * FROM core.search_knowledge(p_keywords := 'правила', p_limit := 5, p_domain := 'SYSTEM')"
    ```
 
-   ВСЕ правила работы в БЗ! Читать перед началом работы!
-
-2. 📋 **Проверить pending задания:**
-   
-   Создать файл:
+2. **Читай непрочитанные диалоги DC:**
    ```bash
-   cat > /c/Temp/get_tasks.json << 'EOF'
-   {"sSqlQuery": "SELECT * FROM log.get_tasks('CCL')"}
-   EOF
-   ```
-   
-   Выполнить:
-   ```bash
-   curl --data-binary @/c/Temp/get_tasks.json http://62.149.5.16:5080/mcp/tools/query_database -H "Content-Type: application/json"
+   /c/Mega/BTIcli/BTIcli.exe "SELECT * FROM log.get_unread_dialogs(p_reader := 'CCL', p_who := 'DC')"
    ```
 
-3. 💬 **Женский род, обращение "Вы"**
+3. **Читай задания:**
+   ```bash
+   /c/Mega/BTIcli/BTIcli.exe "SELECT * FROM log.get_tasks(p_for := 'CCL')"
+   ```
+
+4. **Все доступные процедуры:**
+   ```bash
+   /c/Mega/BTIcli/BTIcli.exe "SELECT * FROM core.get_api_procedures()"
+   ```
 
 ---
 
-## 🔗 ДОСТУП К БД
+## ДОСТУП К БД
 
-**PostgreSQL API:** http://62.149.5.16:5080
-
-**ВАЖНО:** Всегда использовать `--data-binary @file.json`, НЕ `-d` с экранированием!
-
-**Алгоритм работы с БД:**
-1. Создать JSON файл с запросом
-2. Выполнить через curl --data-binary @файл.json
-
-**Пример:**
+**ЕДИНСТВЕННЫЙ СПОСОБ — через BTIcli.exe:**
 ```bash
-cat > /c/Temp/query.json << 'EOF'
-{"sSqlQuery": "SELECT * FROM core.search_knowledge('UAnotation', 3)"}
-EOF
-
-curl --data-binary @/c/Temp/query.json http://62.149.5.16:5080/mcp/tools/query_database -H "Content-Type: application/json"
+/c/Mega/BTIcli/BTIcli.exe "SQL запрос с именованными параметрами"
 ```
 
----
-
-## 📍 ГЛАВНОЕ ПРАВИЛО
-
-**ВСЁ В БАЗЕ ЗНАНИЙ!**
-
-Перед ответом ОБЯЗАТЕЛЬНО искать в БЗ через core.search_knowledge()
-
-Процедуры БЗ:
-- core.search_knowledge('keywords', limit) - поиск
-- core.add_node(title, content, keywords[], type) - добавление (ТОЛЬКО через обсуждение!)
-- core.update_node(id, content, title) - обновление
+**ЗАПРЕЩЕНО:** curl, Invoke-RestMethod, любые другие способы.
 
 ---
 
-## 📊 СИСТЕМА BTI
+## АГЕНТЫ
 
-Торговая аналитическая система на основе izzML.
-
-Детали в БЗ: core.search_knowledge('BTI', 10)
-
----
-
-## 📁 КЛЮЧЕВЫЕ ПУТИ
-
-**Данные izzML:**
-- C:\mega\izzMLmega\*.csv
-
-**Проекты:**
-- C:\Users\Gajda\source\repos\BTI_API\ - сервер
-- C:\Users\Gajda\source\repos\ClaudeCodeLogger\ - логгер
-- C:\Users\Gajda\source\repos\BTIdoc\ - документация
+- **CCL** - Claude Code Local (этот агент)
+- **DC** - Desktop Claude
+- **DO** - Desktop OpenAI
+- **GL** - Gemini Local
 
 ---
 
-## ⚠️ КРИТИЧНО
+## КРИТИЧНО
 
-**ВСЕГДА:**
-- Читать БЗ при запуске
-- Проверять задания
-- Использовать JSON файлы для curl (--data-binary @file.json)
-- Следовать UAnotation (префиксы типов обязательны)
-
-**НИКОГДА:**
+- Женский род, обращение "Вы"
 - Не использовать var
 - Не изменять код без чтения и разрешения
-- Не добавлять в БЗ без обсуждения
+- Все процедуры требуют ИМЕНОВАННЫЕ параметры (p_name := value)
