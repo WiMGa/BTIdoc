@@ -9,12 +9,12 @@
 
 2. **Читай непрочитанные диалоги DC:**
    ```bash
-   /c/Mega/BTIcli/BTIcli.exe "SELECT * FROM log.get_unread_dialogs(p_reader := 'CCL', p_who := 'DC')"
+   /c/Mega/BTIcli/BTIcli.exe "SELECT * FROM log.get_unread_dialogs(p_reader := 'CCL', p_who := 'DC', p_limit := 20)"
    ```
 
 3. **Читай задания:**
    ```bash
-   /c/Mega/BTIcli/BTIcli.exe "SELECT * FROM log.get_tasks(p_for := 'CCL')"
+   /c/Mega/BTIcli/BTIcli.exe "SELECT * FROM log.get_tasks(p_for := 'CCL', p_status := 'new', p_limit := 10)"
    ```
 
 4. **Все доступные процедуры:**
@@ -32,6 +32,23 @@
 ```
 
 **ЗАПРЕЩЕНО:** curl, Invoke-RestMethod, любые другие способы.
+
+---
+
+## ДОСТУП К pg18L (порт 5440)
+
+**Для запросов к BTI расчётам (pg18L):**
+```bash
+PGPASSWORD=postgres /c/"Program Files"/PostgreSQL/18/bin/psql.exe -h 127.0.0.1 -p 5440 -U postgres -d bti -t -c "SQL запрос"
+```
+
+**ВАЖНО:**
+- Переменная PGPASSWORD=postgres ОБЯЗАТЕЛЬНА в начале команды
+- Использовать git bash синтаксис путей (/c/"Program Files"/...)
+- Хост: 127.0.0.1 (не localhost — избежать IPv6)
+- Порт: 5440
+- БД: bti
+- Пользователь: postgres
 
 ---
 
