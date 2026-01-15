@@ -1,2 +1,15 @@
 nul
 MCP_SETUP_SESSION.md
+tmpclaude-*
+*.log
+*.stackdump
+*_state.json
+ccl_settings.json
+search_tasks.json
+*.csv
+*.bin
+*.png
+*.py
+%APPDATA%*
+C:*
+Data*

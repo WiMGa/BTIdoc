@@ -41,9 +41,18 @@ rl.on('line', async (line) => {
     log(`Response sent for id=${request.id}`);
   } catch (error) {
     log(`ERROR: ${error.message}`);
+    // Сохраняем id из запроса, если он был
+    let requestId = 'error-0';
+    try {
+      const parsed = JSON.parse(line);
+      if (parsed.id !== undefined && parsed.id !== null) {
+        requestId = parsed.id;
+      }
+    } catch (e) { /* ignore */ }
+    
     process.stdout.write(JSON.stringify({
       jsonrpc: '2.0',
-      id: null,
+      id: requestId,  // Zod требует string|number, не null!
       error: {
         code: -32603,
         message: error.message
