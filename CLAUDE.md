@@ -1,69 +1,78 @@
-# BTI Project - Claude Code Instructions
+# BTI Project - Claude Code Bootstrap
 
 ## ПРИ КАЖДОМ ЗАПУСКЕ
 
-1. **Читай БЗ:**
-   ```bash
-   /c/Mega/BTIcli/BTIcli.exe "SELECT * FROM core.search_knowledge(p_keywords := 'правила', p_limit := 5, p_domain := 'SYSTEM')"
-   ```
+**1. Читай правила из БЗ:**
+```bash
+/c/Mega/BTIcli/BTIcli.exe "SELECT * FROM core.search_knowledge_brief(p_keywords := 'правила CCL', p_limit := 5, p_domain := 'SYSTEM')"
+```
 
-2. **Читай непрочитанные диалоги DC:**
-   ```bash
-   /c/Mega/BTIcli/BTIcli.exe "SELECT * FROM log.get_unread_dialogs(p_reader := 'CCL', p_who := 'DC', p_limit := 20)"
-   ```
+**2. Читай задания:**
+```bash
+/c/Mega/BTIcli/BTIcli.exe "SELECT * FROM log.get_tasks(p_for := 'CCL', p_status := 'new', p_limit := 10)"
+```
 
-3. **Читай задания:**
-   ```bash
-   /c/Mega/BTIcli/BTIcli.exe "SELECT * FROM log.get_tasks(p_for := 'CCL', p_status := 'new', p_limit := 10)"
-   ```
-
-4. **Все доступные процедуры:**
-   ```bash
-   /c/Mega/BTIcli/BTIcli.exe "SELECT * FROM core.get_api_procedures()"
-   ```
+**3. Сигнатуры процедур (если нужно):**
+```bash
+/c/Mega/BTIcli/BTIcli.exe "SELECT * FROM core.get_api_procedures()"
+```
 
 ---
 
 ## ДОСТУП К БД
 
-**ЕДИНСТВЕННЫЙ СПОСОБ — через BTIcli.exe:**
+**BTIcli (основная БД):**
 ```bash
 /c/Mega/BTIcli/BTIcli.exe "SQL запрос с именованными параметрами"
 ```
 
-**ЗАПРЕЩЕНО:** curl, Invoke-RestMethod, любые другие способы.
+**pg18L (расчёты, порт 5432 — default):**
 
----
-
-## ДОСТУП К pg18L (порт 5440)
-
-**Для запросов к BTI расчётам (pg18L):**
-```bash
-PGPASSWORD=postgres /c/"Program Files"/PostgreSQL/18/bin/psql.exe -h 127.0.0.1 -p 5440 -U postgres -d bti -t -c "SQL запрос"
+*Вариант 1: Python + psycopg2 (РЕКОМЕНДУЕТСЯ)*
+```python
+python -c "import psycopg2; conn = psycopg2.connect(host='127.0.0.1', port=5432, dbname='bti', user='postgres', password='postgres'); cur = conn.cursor(); cur.execute('SELECT count(*) FROM bti_work.t_zz'); print(cur.fetchone()[0]); conn.close()"
 ```
 
-**ВАЖНО:**
-- Переменная PGPASSWORD=postgres ОБЯЗАТЕЛЬНА в начале команды
-- Использовать git bash синтаксис путей (/c/"Program Files"/...)
-- Хост: 127.0.0.1 (не localhost — избежать IPv6)
-- Порт: 5440
-- БД: bti
-- Пользователь: postgres
+*Вариант 2: psql (Bash/Git Bash)*
+```bash
+PGPASSWORD=postgres /c/"Program Files"/PostgreSQL/18/bin/psql.exe -h 127.0.0.1 -p 5432 -U postgres -d bti -t -c "SQL"
+```
+
+*Вариант 3: psql (PowerShell)*
+```powershell
+$env:PGPASSWORD='postgres'; & "C:\Program Files\PostgreSQL\18\bin\psql.exe" -h 127.0.0.1 -p 5432 -U postgres -d bti -t -c "SQL"
+```
 
 ---
 
-## АГЕНТЫ
-
-- **CCL** - Claude Code Local (этот агент)
-- **DC** - Desktop Claude
-- **DO** - Desktop OpenAI
-- **GL** - Gemini Local
-
----
-
-## КРИТИЧНО
+## БАЗОВЫЕ ПРАВИЛА
 
 - Женский род, обращение "Вы"
 - Не использовать var
-- Не изменять код без чтения и разрешения
-- Все процедуры требуют ИМЕНОВАННЫЕ параметры (p_name := value)
+- Именованные параметры: p_name := value
+- Всё остальное — в БЗ (domain=SYSTEM)
+
+---
+
+## ⚠️ КРИТИЧЕСКОЕ ПРАВИЛО: СНАЧАЛА БЗ!
+
+**При недостатке информации — СНАЧАЛА поиск в БЗ, ПОТОМ вопрос пользователю.**
+
+Если не знаешь:
+- Откуда брать данные?
+- Какая таблица/процедура?
+- Какой порт/БД?
+- Какие параметры?
+
+**СНАЧАЛА ищи:**
+```bash
+/c/Mega/BTIcli/BTIcli.exe "SELECT * FROM core.search_knowledge_brief(p_keywords := 'ключевые слова', p_limit := 5, p_domain := 'BTI')"
+```
+
+**Мастер-документы:**
+- #199 — BFSCF Protocol (данные, таблицы, SQL)
+- #84 — Справочник API процедур
+- #171 — llm.ask_api
+- #108 — Архитектура портов PostgreSQL
+
+**Порядок:** Сначала ищи в БЗ. Спрашивай пользователя только если не нашла.
