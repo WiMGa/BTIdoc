@@ -10,6 +10,12 @@ search_tasks.json
 *.bin
 *.png
 *.py
+!zz_edge_test.py
+!zz_edge_ftmo.py
+!zz_edge_diag.py
+!zz_edge_diag2.py
+!zz_edge_diag3.py
+!zz_edge_diag4.py
 %APPDATA%*
 C:*
 Data*
