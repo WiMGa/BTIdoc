@@ -68,11 +68,12 @@ async function makeHttpRequest(rpcRequest) {
     const options = {
       hostname: '62.149.5.16',
       port: 5080,
-      path: '/mcp',
+      path: '/mcp/streamable',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(postData)
+        'Content-Length': Buffer.byteLength(postData),
+        'User-Agent': 'claude-desktop-stdio-bridge'
       },
       timeout: 20000  // 20 сек
     };
