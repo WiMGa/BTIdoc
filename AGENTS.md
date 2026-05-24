@@ -16,15 +16,25 @@
 
 ## ПРИ КАЖДОМ ЗАПУСКЕ
 
-**1. Прочитай свои задания:**
-```bash
-C:\mega\BTIcli\BTIcli.exe "SELECT * FROM log.get_tasks(p_for := 'CX', p_status := 'new', p_limit := 10)"
-```
+**1. Прочитай свои задания через MCP `/mcp/streamable`:**
+
+Codex tool: `mcp__codex_apps__bti_aion._get_tasks`
+
+Параметры:
+- `p_for`: код агента, для CX — `CX`
+- `p_status`: фильтр статуса, обычно `new`
+- `p_limit`: лимит, обычно `10`
 
 **2. Прочитай ключевые узлы БЗ (PRE-FLIGHT CHECK):**
-```bash
-C:\mega\BTIcli\BTIcli.exe "SELECT * FROM core.search_knowledge(p_keywords := 'инфраструктура pg18L pg18S порты', p_limit := 3, p_domain := 'SYSTEM')"
-```
+
+Codex tool: `mcp__codex_apps__bti_aion._search_forms`
+
+Параметры:
+- `p_query`: текст запроса, например `инфраструктура pg18L pg18S порты`
+- `p_limit`: лимит, обычно `3`
+- `p_context`: контекст, например `SYSTEM` или `Infrastructure`
+
+Канон `mcp_endpoints` (entity `98fd7aa1-872f-49ba-b6ed-d787f5e0341d`) задаёт основной semantic-путь: `search_forms_semantic` через `/mcp/streamable`; агент отправляет только текстовый `p_query`, эмбеддинг делает C#-обёртка. В текущем Codex tool surface этот доступ экспонирован как `_search_forms`.
 
 **Мастер-узлы (читай при необходимости):**
 - #186 — Инфраструктура вычислений (pg18L, pg18S, где что лежит)
@@ -33,16 +43,25 @@ C:\mega\BTIcli\BTIcli.exe "SELECT * FROM core.search_knowledge(p_keywords := 'и
 - #108 — Архитектура портов PostgreSQL
 
 **3. Если не знаешь — ищи в БЗ ПЕРЕД вопросом:**
-```bash
-C:\mega\BTIcli\BTIcli.exe "SELECT * FROM core.search_knowledge(p_keywords := 'ключевые слова', p_limit := 5, p_domain := 'SYSTEM')"
-```
+
+Используй `mcp__codex_apps__bti_aion._search_forms`:
+- `p_query`: ключевые слова или естественный вопрос
+- `p_limit`: обычно `5`
+- `p_context`: `SYSTEM` либо `null`, если контекст неизвестен
+
+Для поиска в диалогах:
+- основной канон: `search_dialog_semantic` через `/mcp/streamable`
+- текущий Codex tool surface: `mcp__codex_apps__bti_aion._search_dialog_content`
+- параметры текущего tool surface: `p_keyword`, `p_who`, `p_limit`, `p_max_length`, `p_from_date`, `p_to_date`
 
 ## ДОСТУП К БД
 
-**BTIcli (основная БД AIon — pg18S через API):**
-```bash
-C:\mega\BTIcli\BTIcli.exe "SQL запрос с именованными параметрами"
-```
+**AIon / pg18S через MCP (основной путь для CX):**
+
+Канон endpoints для CX:
+- `/mcp/streamable` — основной агентский путь для DC/DO/CX/CCL/GL; Bearer обязателен; здесь агентские dedicated tools.
+
+Для CX использовать только dedicated MCP tools, которые реально видны в текущем tool surface. Сырые SQL-запросы к pg18S из CX не использовать.
 
 **pg18L (расчётные данные BTI, порт 5432):**
 ```bash
@@ -57,25 +76,44 @@ conn = psycopg2.connect(host='127.0.0.1', port=5432, dbname='bti', user='postgre
 
 ## КЛЮЧЕВЫЕ ПРОЦЕДУРЫ
 
-```bash
-# Список всех доступных процедур
-C:\mega\BTIcli\BTIcli.exe "SELECT * FROM core.get_api_procedures()"
+Канон whitelist процедур pg18S — `core.get_api_procedures()`, источник `core.t_api_procedures` (`s_signature`, `s_description`, `s_example`). В Codex использовать не SQL-строки, а соответствующие dedicated MCP tools:
 
-# Поиск в БЗ
-C:\mega\BTIcli\BTIcli.exe "SELECT * FROM core.search_knowledge(p_keywords := '...', p_limit := 5, p_domain := 'SYSTEM')"
+**Задачи:**
+- `mcp__codex_apps__bti_aion._get_tasks`
+- параметры: `p_for`, `p_status`, `p_limit`
 
-# Логи агента
-C:\mega\BTIcli\BTIcli.exe "SELECT * FROM log.get_dialog_history(p_who := 'GL', p_limit := 10, p_from_date := NULL, p_to_date := NULL, p_max_length := 10000, p_topic := 'ALL')"
+**Создать или обновить задачу:**
+- `mcp__codex_apps__bti_aion._create_update_task`
+- параметры: `p_from`, `p_to`, `p_title`, `p_task`, `p_context`, `p_check`, `p_task_id`, `p_read_nodes`, `p_read_dialogs`, `p_parent_task_id`
 
-# Задачи
-C:\mega\BTIcli\BTIcli.exe "SELECT * FROM log.get_tasks(p_for := 'CX', p_status := 'new', p_limit := 10)"
+**Завершить задачу:**
+- `mcp__codex_apps__bti_aion._complete_task`
+- параметры: `p_task_id`, `p_status`, `p_result`
+- `p_result` обязателен для любого статуса
 
-# Завершить задачу
-C:\mega\BTIcli\BTIcli.exe "SELECT * FROM log.complete_task(p_task_id := 123, p_status := 'completed', p_result := 'Описание результата')"
+**Написать в лог:**
+- `mcp__codex_apps__bti_aion._add_dialog_message`
+- параметры: `p_who`, `p_role`, `p_content`, `p_session_id`, `p_metadata`
 
-# Написать в лог
-C:\mega\BTIcli\BTIcli.exe "SELECT * FROM log.add_dialog_message(p_who := 'CX', p_role := 'assistant', p_content := 'текст', p_session_id := NULL, p_metadata := NULL)"
-```
+**История диалогов:**
+- `mcp__codex_apps__bti_aion._get_dialog_history`
+- параметры: `p_who`, `p_limit`, `p_max_length`, `p_topic`, `p_from_date`, `p_to_date`
+
+**Поиск в диалогах:**
+- канон: `search_dialog_semantic` через `/mcp/streamable`
+- текущий Codex tool surface: `mcp__codex_apps__bti_aion._search_dialog_content`
+- параметры текущего tool surface: `p_keyword`, `p_who`, `p_limit`, `p_max_length`, `p_from_date`, `p_to_date`
+
+**Поиск в БЗ:**
+- канон: `search_forms_semantic` через `/mcp/streamable`
+- текущий Codex tool surface: `mcp__codex_apps__bti_aion._search_forms`
+- параметры текущего tool surface: `p_query`, `p_context`, `p_form_type`, `p_limit`
+
+**Чтение сущности/формы БЗ:**
+- `mcp__codex_apps__bti_aion._get_entity`
+- параметр: `p_entity_id` — полный UUID сущности
+- `mcp__codex_apps__bti_aion._get_form`
+- параметр: `p_form_id` — полный UUID формы
 
 ## ДРУГИЕ АГЕНТЫ
 
