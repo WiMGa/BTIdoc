@@ -96,7 +96,7 @@ async function makeHttpRequest(sPath, rpcRequest) {
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(postData),
-        'User-Agent': 'claude-desktop-stdio-bridge'
+        'User-Agent': process.env.BTI_MCP_UA || 'claude-desktop-stdio-bridge'
       },
       timeout: 20000  // 20 сек
     };
