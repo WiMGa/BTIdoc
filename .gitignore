@@ -19,3 +19,13 @@ search_tasks.json
 %APPDATA%*
 C:*
 Data*
+
+# Вложенные отдельные репозитории (НЕ часть BTIdoc — собственные проекты)
+b20_80_8_HistoryBioBot_vs22/
+cANN_statistica2/
+
+# Рабочие worktree Claude и стрэй-конфиги/артефакты
+.claude/worktrees/
+/settings.json
+aios_gate1_projection*.json
+BioBot_VDS_Deploy.md
