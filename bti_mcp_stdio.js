@@ -96,7 +96,11 @@ async function makeHttpRequest(sPath, rpcRequest) {
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(postData),
-        'User-Agent': process.env.BTI_MCP_UA || 'claude-desktop-stdio-bridge'
+        'User-Agent': process.env.BTI_MCP_UA || 'claude-desktop-stdio-bridge',
+        // Идентификация агента для per-agent гейта (as_allowed_agents, #2176). Desktop-режимы
+        // (Chat=DC/Code=CCL/Cowork=CCW) неразличимы по UA -> объявляем код агента ЯВНО.
+        // Этот мост = коннектор Code -> CCL. Переопределяется env BTI_MCP_AGENT.
+        'X-Agent-Code': process.env.BTI_MCP_AGENT || 'CCL'
       },
       timeout: 20000  // 20 сек
     };
