@@ -26,6 +26,10 @@ cANN_statistica2/
 
 # Рабочие worktree Claude и стрэй-конфиги/артефакты
 .claude/worktrees/
+.claude/settings.local.json
+.claude/launch.json
+.claude/scheduled_tasks.lock
 /settings.json
 aios_gate1_projection*.json
 BioBot_VDS_Deploy.md
+tmp_live_test/
