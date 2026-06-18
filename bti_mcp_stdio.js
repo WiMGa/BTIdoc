@@ -18,6 +18,16 @@ const PATH_ADMIN = '/mcp/admin';
 
 log('Starting BTI MCP stdio proxy...');
 
+// Идентификация агента для per-agent гейта (#2176). Desktop-режимы (Chat/Code/Cowork)
+// неразличимы по UA -> код агента объявляется ЯВНО через env BTI_MCP_AGENT.
+// #2280: молчаливый дефолт 'CCL' убран — fail-loud. Иначе чужой режим (Desktop Chat)
+// молча уходил под CCL. Единственный потребитель моста — Desktop Chat (=DC, env задан).
+const AGENT_CODE = process.env.BTI_MCP_AGENT;
+if (!AGENT_CODE) {
+  process.stderr.write('[BTI-MCP] FATAL: BTI_MCP_AGENT не задан — мост обязан идентифицировать агента явно (#2280, дефолт убран). Задайте env BTI_MCP_AGENT (напр. DC для Desktop Chat).\n');
+  process.exit(1);
+}
+
 // Читаем JSON-RPC из stdin построчно
 const rl = readline.createInterface({
   input: process.stdin,
@@ -97,10 +107,9 @@ async function makeHttpRequest(sPath, rpcRequest) {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(postData),
         'User-Agent': process.env.BTI_MCP_UA || 'claude-desktop-stdio-bridge',
-        // Идентификация агента для per-agent гейта (as_allowed_agents, #2176). Desktop-режимы
-        // (Chat=DC/Code=CCL/Cowork=CCW) неразличимы по UA -> объявляем код агента ЯВНО.
-        // Этот мост = коннектор Code -> CCL. Переопределяется env BTI_MCP_AGENT.
-        'X-Agent-Code': process.env.BTI_MCP_AGENT || 'CCL'
+        // Идентификация агента для per-agent гейта (as_allowed_agents, #2176). Код агента
+        // задан ЯВНО через env BTI_MCP_AGENT и провалидирован на старте (#2280, fail-loud).
+        'X-Agent-Code': AGENT_CODE
       },
       timeout: 20000  // 20 сек
     };
