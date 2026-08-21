@@ -33,3 +33,6 @@ cANN_statistica2/
 aios_gate1_projection*.json
 BioBot_VDS_Deploy.md
 tmp_live_test/
+
+# npm-зависимости — не версионируются (ошибочно трекались, сняты 21.08)
+node_modules/
