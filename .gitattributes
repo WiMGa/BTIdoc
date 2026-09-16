@@ -1,0 +1,3 @@
+# Batch-обёртки запуска CCL: CRLF на checkout на любой машине (наряд #2767)
+*.cmd text eol=crlf
+*.bat text eol=crlf
