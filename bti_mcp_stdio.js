@@ -6,6 +6,8 @@
  */
 
 const http = require('http');
+const https = require('https');
+const fs = require('fs');
 const readline = require('readline');
 
 // Отладочные сообщения идут в stderr (видны в логах Desktop Claude)
@@ -29,9 +31,20 @@ if (!AGENT_CODE) {
 }
 
 // 11.10: без токена мост держался только на допуске по User-Agent; при AllowUserAgentBypass=false
-// сервер отвечает 401 и bti-local не стартует. Токен — форма БЗ a17ed3e0, задаётся env BTI_MCP_TOKEN.
-const BEARER_TOKEN = process.env.BTI_MCP_TOKEN;
-if (!BEARER_TOKEN) log('WARN: BTI_MCP_TOKEN не задан — вход только по User-Agent (AllowUserAgentBypass)');
+// сервер отвечает 401 и bti-local не стартует. Токен — форма БЗ a17ed3e0.
+// #3084: адрес и токен — из машинного файла C:\Data\aion_mcp.json {"url": "...", "token": "..."} (общий с wv2AI),
+// env BTI_MCP_URL / BTI_MCP_TOKEN перекрывают файл. Нет ни того ни другого — прежний http://62.149.5.16:5080 без токена.
+const SETTINGS_FILE = 'C:\\Data\\aion_mcp.json';
+let eSettings = {};
+try {
+  if (fs.existsSync(SETTINGS_FILE)) eSettings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8').replace(/^\uFEFF/, ''));
+} catch (e) {
+  log(`WARN: ${SETTINGS_FILE} не прочитан: ${e.message}`);
+}
+const BASE_URL = new URL(process.env.BTI_MCP_URL || eSettings.url || 'http://62.149.5.16:5080');
+const BEARER_TOKEN = process.env.BTI_MCP_TOKEN || eSettings.token;
+log(`Server ${BASE_URL.origin}, token: ${BEARER_TOKEN ? 'yes' : 'no'}`);
+if (!BEARER_TOKEN) log('WARN: токен не задан — /mcp/admin закрыт, /mcp/streamable только по User-Agent (AllowUserAgentBypass)');
 
 // Читаем JSON-RPC из stdin построчно
 const rl = readline.createInterface({
@@ -104,8 +117,8 @@ async function makeHttpRequest(sPath, rpcRequest) {
     const postData = JSON.stringify(rpcRequest);
 
     const options = {
-      hostname: '62.149.5.16',
-      port: 5080,
+      hostname: BASE_URL.hostname,
+      port: BASE_URL.port || (BASE_URL.protocol === 'https:' ? 443 : 80),
       path: sPath,
       method: 'POST',
       headers: {
@@ -120,7 +133,7 @@ async function makeHttpRequest(sPath, rpcRequest) {
     };
     if (BEARER_TOKEN) options.headers['Authorization'] = `Bearer ${BEARER_TOKEN}`;
 
-    const req = http.request(options, (res) => {
+    const req = (BASE_URL.protocol === 'https:' ? https : http).request(options, (res) => {
       let data = '';
       res.on('data', (chunk) => { data += chunk; });
       res.on('end', () => {
