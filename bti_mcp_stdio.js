@@ -28,6 +28,11 @@ if (!AGENT_CODE) {
   process.exit(1);
 }
 
+// 11.10: без токена мост держался только на допуске по User-Agent; при AllowUserAgentBypass=false
+// сервер отвечает 401 и bti-local не стартует. Токен — форма БЗ a17ed3e0, задаётся env BTI_MCP_TOKEN.
+const BEARER_TOKEN = process.env.BTI_MCP_TOKEN;
+if (!BEARER_TOKEN) log('WARN: BTI_MCP_TOKEN не задан — вход только по User-Agent (AllowUserAgentBypass)');
+
 // Читаем JSON-RPC из stdin построчно
 const rl = readline.createInterface({
   input: process.stdin,
@@ -113,16 +118,26 @@ async function makeHttpRequest(sPath, rpcRequest) {
       },
       timeout: 20000  // 20 сек
     };
+    if (BEARER_TOKEN) options.headers['Authorization'] = `Bearer ${BEARER_TOKEN}`;
 
     const req = http.request(options, (res) => {
       let data = '';
       res.on('data', (chunk) => { data += chunk; });
       res.on('end', () => {
+        let eBody;
         try {
-          resolve(JSON.parse(data));
+          eBody = JSON.parse(data);
         } catch (e) {
-          reject(new Error(`Invalid JSON: ${data}`));
+          reject(new Error(`HTTP ${res.statusCode}, invalid JSON: ${data}`));
+          return;
         }
+        // Ответ не по JSON-RPC (401 {"error":"..."}) без id клиент не сопоставит с запросом и ждёт
+        // до тайм-аута — отдаём ошибку, её обработчик line вернёт JSON-RPC error с id запроса.
+        if (!eBody || eBody.jsonrpc !== '2.0') {
+          reject(new Error(`HTTP ${res.statusCode} ${sPath}: ${data}`));
+          return;
+        }
+        resolve(eBody);
       });
     });
 
