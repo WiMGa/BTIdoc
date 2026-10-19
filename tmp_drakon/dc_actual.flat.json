@@ -1,0 +1,30 @@
+{
+  "id": "PLAN_INTAKE",
+  "name": "PLAN_INTAKE",
+  "nodes": [
+    { "code": "b0",  "type": "branch",    "branchId": 0, "content": "Старт" },
+    { "code": "b1",  "type": "branch",    "branchId": 1, "content": "Целевой план (Класс 1)" },
+    { "code": "b2",  "type": "branch",    "branchId": 2, "content": "Инфра-план (Класс 2)" },
+    { "code": "b3",  "type": "branch",    "branchId": 3, "content": "Запуск" },
+    { "code": "end", "type": "end" },
+    { "code": "a1",  "type": "insertion", "sub": "intake1", "content": "Зафиксировать: что хочу сделать сейчас" },
+    { "code": "q1",  "type": "question",  "content": "Целевая работа (Класс 1)?" },
+    { "code": "t1",  "type": "action",    "content": "Найти/создать Definition в плане проекта (DECK/BFSC)" },
+    { "code": "i1",  "type": "action",    "content": "Найти/создать Definition в плане AIon" },
+    { "code": "r1",  "type": "action",    "content": "Инстанцировать Definition под корень -> Instance" },
+    { "code": "r2",  "type": "action",    "content": "Выставить фокус (b_is_current_focus)" }
+  ],
+  "deps": [
+    { "from": "b0", "to": "a1",  "port": "one" },
+    { "from": "a1", "to": "q1",  "port": "one" },
+    { "from": "q1", "to": "b1",  "port": "one" },
+    { "from": "q1", "to": "b2",  "port": "two" },
+    { "from": "b1", "to": "t1",  "port": "one" },
+    { "from": "t1", "to": "b3",  "port": "one" },
+    { "from": "b2", "to": "i1",  "port": "one" },
+    { "from": "i1", "to": "b3",  "port": "one" },
+    { "from": "b3", "to": "r1",  "port": "one" },
+    { "from": "r1", "to": "r2",  "port": "one" },
+    { "from": "r2", "to": "end", "port": "one" }
+  ]
+}
