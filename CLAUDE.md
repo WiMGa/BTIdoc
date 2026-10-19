@@ -1,7 +1,7 @@
 # BTI Project - Claude Code Bootstrap
 
 > **Доступ к pg18S (БЗ, задачи, диалоги на VDS) — ТОЛЬКО через MCP-тулы коннектора `bti-api`.**
-> Коннектор уже настроен (managed claude.ai connector → `http://62.149.5.16:5080/mcp/streamable`, UA `claude-ccl`).
+> Коннектор уже настроен (managed claude.ai connector → `http://62.149.5.16:5080/mcp/streamable`). Приходит как UA `Claude-User` и агента НЕ передаёт (#3184): в `take_task`, `complete_task_guarded`, `add_dialog_message` передавать `p_who := 'CCL'`.
 > Тулы видны как `mcp__claude_ai_bti-api__*`; если deferred — подгрузить схему через ToolSearch (`select:<name>`).
 >
 > **BTIcli.exe ВЫВЕДЕН ИЗ ЭКСПЛУАТАЦИИ (#1946).** Бил на `/mcp/tools/query_database` — endpoint снесён 24.05 (#1938, push 1ba7905), отдаёт 404. НЕ использовать, в шаблонах ниже его нет.
