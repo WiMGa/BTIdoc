@@ -76,7 +76,7 @@ conn = psycopg2.connect(host='127.0.0.1', port=5432, dbname='bti', user='postgre
 
 ## КЛЮЧЕВЫЕ ПРОЦЕДУРЫ
 
-Канон whitelist процедур pg18S — `core.get_api_procedures()`, источник `core.t_api_procedures` (`s_signature`, `s_description`, `s_example`). В Codex использовать не SQL-строки, а соответствующие dedicated MCP tools:
+Канон whitelist процедур pg18S — `core.get_api_procedures()`, источник `core.t_api_procedures` (`s_description`, `s_example`; сигнатура — из самой процедуры, pg_proc). В Codex использовать не SQL-строки, а соответствующие dedicated MCP tools:
 
 **Задачи:**
 - `mcp__codex_apps__bti_aion._get_tasks`
