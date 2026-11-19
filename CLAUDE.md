@@ -4,10 +4,13 @@
 рабочие корни диска, порядок работы. Сюда его не копировать — две копии = одна протухает молча (#2568).
 
 ## Канал к pg18S (БЗ, задачи, диалоги)
-MCP-коннектор `bti-api` (managed claude.ai connector → `http://62.149.5.16:5080/mcp/streamable`).
-Коннектор приходит как UA `Claude-User` и агента НЕ передаёт (#3184): в `take_task`, `complete_task_guarded`,
-`add_dialog_message` передавать `p_who := 'CCL'`.
-Тулы видны как `mcp__claude_ai_bti-api__*`; если deferred — подгрузить схему через ToolSearch (`select:<имя>`).
+Собственный MCP-сервер CCL `bti` (user scope в `~/.claude.json`, HTTP → `https://btiapi.net/mcp/streamable`,
+заголовки `Authorization` из `C:\Data\aion_mcp.json`, `X-Agent-Code: CCL`, `X-Agent-Host: <машина>`) — агента сервер
+определяет сам, `p_who` не обязателен. Тулы видны как `mcp__bti__*`; если deferred — подгрузить схему через ToolSearch (`select:<имя>`).
+Коннекторы аккаунта claude.ai — канал DC: в Claude Code выключены (`ENABLE_CLAUDEAI_MCP_SERVERS=false` в env
+`~/.claude/settings.json`, страховка — deny `mcp__claude_ai_bti-api`). Включать их CCL нельзя (#3464).
+Подключение на новой машине: `claude mcp add --scope user --transport http bti https://btiapi.net/mcp/streamable`
+`--header "Authorization: Bearer <token>" --header "X-Agent-Code: CCL" --header "X-Agent-Host: <машина>"`.
 Сырого SQL к pg18S у CCL нет — зона DC. Задачи создавать и закрывать только guarded-тулами
 (`create_update_task_guarded` / `complete_task_guarded`, тропа обязательна).
 
