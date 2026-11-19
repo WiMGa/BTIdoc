@@ -42,7 +42,8 @@ try {
   log(`WARN: ${SETTINGS_FILE} не прочитан: ${e.message}`);
 }
 const BASE_URL = new URL(process.env.BTI_MCP_URL || eSettings.url || 'http://62.149.5.16:5080');
-const BEARER_TOKEN = process.env.BTI_MCP_TOKEN || eSettings.token;
+// #3465: токен агента — env BTI_MCP_TOKEN (DC: в claude_desktop_config.json), иначе tokens[<агент>] файла, иначе прежний общий token
+const BEARER_TOKEN = process.env.BTI_MCP_TOKEN || (eSettings.tokens || {})[process.env.BTI_MCP_AGENT] || eSettings.token;
 log(`Server ${BASE_URL.origin}, token: ${BEARER_TOKEN ? 'yes' : 'no'}`);
 if (!BEARER_TOKEN) log('WARN: токен не задан — /mcp/admin закрыт, /mcp/streamable только по User-Agent (AllowUserAgentBypass)');
 
